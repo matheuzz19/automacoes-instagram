@@ -1,0 +1,233 @@
+{
+  "name": "Mensagem Aniversário",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9,
+              "triggerAtMinute": 17
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5bddadd7-6c53-470b-995a-44976d6123a8",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "Aniversário Clientes",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "aniversariante",
+              "lookupValue": "true"
+            }
+          ]
+        },
+        "combineFilters": "OR",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        200,
+        0
+      ],
+      "id": "dab37ac2-af6f-4848-93a0-8066eed77133",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Nome: \n{{ $json.nome_cliente }}"
+            },
+            {
+              "content": "Você é o atendente da Empresa Matheus Automações e sua função é parabenizar o aniversário dos nossos clientes. \nEscreva uma mensagem de parabéns inspiradora e breve. Utilize apenas o primeiro nome do cliente e cite o nome da nossa empresa. \nNão cometa erros de português e não seja redundante. \nUtilize uma linguagem um pouco mais informal e amigável",
+              "role": "system"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        660,
+        0
+      ],
+      "id": "013f3af8-49cb-4cbb-91cc-5cc0e8817807",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": ""
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.message.content }}"
+            },
+            {
+              "name": "number",
+              "value": "={{ $('Edit Fields').item.json.whatsapp }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1060,
+        0
+      ],
+      "id": "53dd7902-8dc8-4808-8b1f-6",
+      "name": "Resposta Whatsapp"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8ca37969-e331-49cb-b9ee-203d3847a769",
+              "name": "nome_cliente",
+              "value": "={{ $json.nome }}",
+              "type": "string"
+            },
+            {
+              "id": "d6b9916d-54c6-4d84-9e7c-bf7351486f08",
+              "name": "data_nascimento",
+              "value": "={{ $json.nascimento }}",
+              "type": "string"
+            },
+            {
+              "id": "cd019ede-381a-49a5-ba70-7873236c93ce",
+              "name": "whatsapp",
+              "value": "={{ $json.numero_wpp ? String($json.numero_wpp).trim() + '@s.whatsapp.net' : null }}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        420,
+        0
+      ],
+      "id": "e5622f46-61dc-4614-a7fa-4b40b48776a5",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Resposta Whatsapp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "dfcd7707-8ae4-4074-91ba-3a8a148868d6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a3e7caaec9ba9e5c5fb4ae1676d85b2f0b44b6ad3e51943b03acd6a8c857f3f6"
+  },
+  "id": "fwdZRJbBhuiu5aNH",
+  "tags": []
+}
